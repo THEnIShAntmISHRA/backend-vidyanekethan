@@ -3,7 +3,7 @@ const db = require("../config/db");
 exports.getAll = async (req, res) => {
   try {
     const { date_filter, location } = req.query;
-    let sql = "SELECT * FROM appointments WHERE admin_id = ?";
+    let sql = "SELECT * FROM appointments WHERE admin_id = ? AND deleted_at IS NULL";
     const params = [req.admin.id];
 
     if (location && location !== "all") { sql += " AND location = ?"; params.push(location); }
@@ -30,7 +30,7 @@ exports.getAll = async (req, res) => {
 exports.getOne = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM appointments WHERE id = ? AND admin_id = ?",
+      "SELECT * FROM appointments WHERE id = ? AND admin_id = ? AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: "Appointment not found" });
@@ -78,7 +78,7 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM appointments WHERE id = ? AND admin_id = ?",
+      "UPDATE appointments SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND admin_id = ? AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Appointment not found" });

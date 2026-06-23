@@ -7,7 +7,7 @@ exports.getAll = async (req, res) => {
 /*    let sql = "SELECT * FROM students WHERE admin_id = ? OR admin_id = 8";
     const params = [req.admin.id]; */
 
- let sql = "SELECT * FROM students WHERE 1=1";
+ let sql = "SELECT * FROM students WHERE deleted_at IS NULL";
     const params = [];
 
     if (standard) { sql += " AND standard = ?"; params.push(standard); }
@@ -31,7 +31,7 @@ exports.getAll = async (req, res) => {
 exports.getOne = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "Select * from students WHERE id = ? AND (admin_id = ? OR admin_id IN (1,8))",
+      "Select * from students WHERE id = ? AND (admin_id = ? OR admin_id IN (1,8)) AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: "Student not found" });
@@ -44,15 +44,29 @@ exports.getOne = async (req, res) => {
 /* POST /api/students */
 exports.create = async (req, res) => {
   try {
-    const { admin_id,name, email, phone, father_name, father_phone, gender, academic_year, standard, course, branch, hostel, fee, paid_fee } = req.body;
+    const {
+      admin_id, name, email, phone, father_name, father_phone, gender, academic_year,
+      standard, course, branch, hostel, fee, paid_fee, dob, address, aadhar,
+      caste_religion, photo, admission_type, admission_date, school_fee, academy_fee, hostel_fee,
+      scholarship_type, scholarship_value, scholarship_amount
+    } = req.body;
     if (!name) return res.status(400).json({ success: false, message: "Name is required" });
 
     const [result] = await db.query(
       `INSERT INTO students
-         (admin_id,name,email,phone,father_name,father_phone,gender,academic_year,standard,course,branch,hostel,fee,paid_fee)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, ?)`,
-      [admin_id, name, email||null, phone||"", father_name||"", father_phone||"",
-       gender||"", academic_year||"", standard||"", course||"", branch||"", hostel||"", fee||0, paid_fee||0]
+         (admin_id, name, email, phone, father_name, father_phone, gender, academic_year,
+          standard, course, branch, hostel, fee, paid_fee, dob, address, aadhar,
+          caste_religion, photo, admission_type, admission_date, school_fee, academy_fee, hostel_fee,
+          scholarship_type, scholarship_value, scholarship_amount)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        admin_id, name, email || null, phone || "", father_name || "", father_phone || "",
+        gender || "", academic_year || "", standard || "", course || "", branch || "", hostel || "",
+        fee || 0, paid_fee || 0, dob || null, address || "", aadhar || "",
+        caste_religion || "", photo || null, admission_type || "", admission_date || null,
+        school_fee || 0, academy_fee || 0, hostel_fee || 0,
+        scholarship_type || 'None', scholarship_value || 0, scholarship_amount || 0
+      ]
     );
     res.status(201).json({ success: true, message: "Student created", id: result.insertId });
   } catch (err) {
@@ -63,15 +77,27 @@ exports.create = async (req, res) => {
 /* PUT /api/students/:id */
 exports.update = async (req, res) => {
   try {
-    const { admin_id,name, id, email, phone, father_name, father_phone, gender, academic_year, standard, course, branch, hostel, academy_fee, school_fee, hostel_fee, fee, paid_fee } = req.body;
+    const {
+      admin_id, name, id, email, phone, father_name, father_phone, gender, academic_year,
+      standard, course, branch, hostel, academy_fee, school_fee, hostel_fee, fee, paid_fee,
+      dob, address, aadhar, caste_religion, photo, admission_type, admission_date,
+      scholarship_type, scholarship_value, scholarship_amount
+    } = req.body;
     const [result] = await db.query(
       `UPDATE students
        SET name=?,email=?,phone=?,father_name=?,father_phone=?,standard=?,course=?,
-       branch=?,academy_fee=?,school_fee=?,hostel_fee=?,fee=?,paid_fee=?
+       branch=?,academy_fee=?,school_fee=?,hostel_fee=?,fee=?,paid_fee=?,
+       dob=?,address=?,aadhar=?,caste_religion=?,photo=?,admission_type=?,admission_date=?,
+       gender=?,academic_year=?,hostel=?,scholarship_type=?,scholarship_value=?,scholarship_amount=?
        WHERE id=?`,
-      [name, email||null, phone||"", father_name||"", father_phone||"",
-       standard||"", course||"", branch||"", academy_fee||0, school_fee||0, hostel_fee||0, fee||0, paid_fee||0,
-       id]
+      [
+        name, email || null, phone || "", father_name || "", father_phone || "",
+        standard || "", course || "", branch || "", academy_fee || 0, school_fee || 0, hostel_fee || 0, fee || 0, paid_fee || 0,
+        dob || null, address || "", aadhar || "", caste_religion || "", photo || null, admission_type || "", admission_date || null,
+        gender || "", academic_year || "", hostel || "",
+        scholarship_type || 'None', scholarship_value || 0, scholarship_amount || 0,
+        id
+      ]
     );
 
     console.log("Admin id", result);
@@ -86,7 +112,7 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM students WHERE id = ? AND (admin_id = ? OR admin_id IN (1, 8))",
+      "UPDATE students SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND (admin_id = ? OR admin_id IN (1, 8)) AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Student not found" });

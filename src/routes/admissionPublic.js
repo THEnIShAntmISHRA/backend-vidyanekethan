@@ -110,7 +110,7 @@ router.post("/", async (req, res) => {
     // ✅ Insert query
     const [result] = await db.query(
       `INSERT INTO students
-      (admin_id, name, phone, email, father_name, father_phone, standard, course, branch, dob, address, aadhar, caste_religion, photo, admission_type, admission_date, fee, paid_fee, school_fees, academy_fees, hostel_fees)
+      (admin_id, name, phone, email, father_name, father_phone, standard, course, branch, dob, address, aadhar, caste_religion, photo, admission_type, admission_date, fee, paid_fee, school_fee, academy_fee, hostel_fee)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`,
 
       [

@@ -5,9 +5,9 @@ exports.stats = async (req, res) => {
   try {
     const aid = req.admin.id;
 
-    const [[{ students }]] = await db.query("SELECT COUNT(*) AS students FROM students WHERE admin_id=?", [aid]);
-    const [[{ teachers }]] = await db.query("SELECT COUNT(*) AS teachers FROM teachers WHERE admin_id=?", [aid]);
-    const [[{ revenue }]] = await db.query("SELECT COALESCE(SUM(paid_fee),0) AS revenue FROM students WHERE admin_id=?", [aid]);
+    const [[{ students }]] = await db.query("SELECT COUNT(*) AS students FROM students WHERE admin_id=? AND deleted_at IS NULL", [aid]);
+    const [[{ teachers }]] = await db.query("SELECT COUNT(*) AS teachers FROM teachers WHERE admin_id=? AND deleted_at IS NULL", [aid]);
+    const [[{ revenue }]] = await db.query("SELECT COALESCE(SUM(paid_fee),0) AS revenue FROM students WHERE admin_id=? AND deleted_at IS NULL", [aid]);
 
     res.json({
       success: true,
@@ -25,7 +25,7 @@ exports.paymentStatus = async (req, res) => {
       `SELECT
          SUM(CASE WHEN paid_fee >= fee THEN 1 ELSE 0 END) AS paid,
          SUM(CASE WHEN paid_fee < fee  THEN 1 ELSE 0 END) AS pending
-       FROM students WHERE admin_id=?`,
+       FROM students WHERE admin_id=? AND deleted_at IS NULL`,
       [req.admin.id]
     );
     res.json({ success: true, data: rows[0] });
@@ -38,7 +38,7 @@ exports.paymentStatus = async (req, res) => {
 exports.studentsByStandard = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT standard AS name, COUNT(*) AS count FROM students WHERE admin_id=? GROUP BY standard ORDER BY standard+0",
+      "SELECT standard AS name, COUNT(*) AS count FROM students WHERE admin_id=? AND deleted_at IS NULL GROUP BY standard ORDER BY standard+0",
       [req.admin.id]
     );
     res.json({ success: true, data: rows });
@@ -51,7 +51,7 @@ exports.studentsByStandard = async (req, res) => {
 exports.studentsByLocation = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT branch AS name, COUNT(*) AS count FROM students WHERE admin_id=? GROUP BY branch",
+      "SELECT branch AS name, COUNT(*) AS count FROM students WHERE admin_id=? AND deleted_at IS NULL GROUP BY branch",
       [req.admin.id]
     );
     res.json({ success: true, data: rows });
@@ -70,8 +70,8 @@ exports.feeCollection = async (req, res) => {
          SUM(paid_amount)            AS collected,
          SUM(amount - paid_amount)   AS pending
        FROM invoices
-       WHERE admin_id=? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-       GROUP BY YEAR(created_at), MONTH(created_at)
+       WHERE admin_id=? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) AND deleted_at IS NULL
+       GROUP BY YEAR(created_at), MONTH(created_at), DATE_FORMAT(created_at,'%b')
        ORDER BY YEAR(created_at), MONTH(created_at)`,
       [req.admin.id]
     );
@@ -89,8 +89,8 @@ exports.financeOverview = async (req, res) => {
       `SELECT DATE_FORMAT(created_at,'%b') AS month, MONTH(created_at) AS m, YEAR(created_at) AS y,
               SUM(paid_amount) AS income
        FROM invoices
-       WHERE admin_id=? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-       GROUP BY y,m ORDER BY y,m`,
+       WHERE admin_id=? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) AND deleted_at IS NULL
+       GROUP BY y,m,month ORDER BY y,m`,
       [req.admin.id]
     );
     // expense = payroll + expenses per month
@@ -98,8 +98,8 @@ exports.financeOverview = async (req, res) => {
       `SELECT DATE_FORMAT(record_date,'%b') AS month, MONTH(record_date) AS m, YEAR(record_date) AS y,
               SUM(amount) AS expense
        FROM finance_records
-       WHERE admin_id=? AND record_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-       GROUP BY y,m ORDER BY y,m`,
+       WHERE admin_id=? AND record_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) AND deleted_at IS NULL
+       GROUP BY y,m,month ORDER BY y,m`,
       [req.admin.id]
     );
 

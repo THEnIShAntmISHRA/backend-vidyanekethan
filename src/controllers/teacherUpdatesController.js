@@ -9,7 +9,7 @@ function normalizeNotes(value) {
 async function resolveTeacherName(adminId, teacherId, teacherName) {
   if (!teacherId) return (teacherName || "").trim();
   const [rows] = await db.query(
-    "SELECT name FROM teachers WHERE id = ? AND (admin_id = ? OR admin_id = 8)",
+    "SELECT name FROM teachers WHERE id = ? AND (admin_id = ? OR admin_id = 8) AND deleted_at IS NULL",
     [teacherId, adminId]
   );
   if (!rows.length) return "";
@@ -30,7 +30,7 @@ exports.getAll = async (req, res) => {
 
 
  
-    let whereSql = " FROM teacher_updates WHERE (admin_id = ? OR admin_id = 8)";
+    let whereSql = " FROM teacher_updates WHERE (admin_id = ? OR admin_id = 8) AND deleted_at IS NULL";
     const params = [req.admin.id];
     if (filterTeacherName) {
       whereSql += " AND teacher_name = ?";
@@ -180,7 +180,7 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM teacher_updates WHERE id = ? AND (admin_id = ? OR admin_id = 8)",
+      "UPDATE teacher_updates SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND (admin_id = ? OR admin_id = 8) AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!result.affectedRows) {

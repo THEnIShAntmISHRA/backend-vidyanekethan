@@ -85,7 +85,7 @@ exports.createByStudent = async (req, res) => {
     }
 
     const [studentRows] = await db.query(
-      "SELECT id FROM students WHERE id = ?",
+      "SELECT id FROM students WHERE id = ? AND deleted_at IS NULL",
       [studentId]
     );
     if (!studentRows.length) {
@@ -124,6 +124,31 @@ exports.createByStudent = async (req, res) => {
       [req.admin.id, studentId, String(subject).trim(), marksNum, String(examination).trim(), exam_date]
     );
     res.status(201).json({ success: true, message: "Assessment added" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getByStandard = async (req, res) => {
+  try {
+    await ensureTable();
+    const { standardName } = req.params;
+    if (!standardName) {
+      return res.status(400).json({ success: false, message: "Standard name is required" });
+    }
+
+    const [rows] = await db.query(
+      `
+      SELECT a.id, a.student_id, a.subject, a.marks, a.examination, a.exam_date, a.created_at, a.updated_at
+      FROM teacher_student_assessments a
+      INNER JOIN students s ON a.student_id = s.id
+      WHERE a.admin_id = ? AND s.standard = ? AND s.deleted_at IS NULL
+      ORDER BY a.exam_date DESC, a.id DESC
+      `,
+      [req.admin.id, standardName]
+    );
+
+    res.json({ success: true, data: rows });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

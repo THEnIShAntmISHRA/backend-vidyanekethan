@@ -4,7 +4,7 @@ const db = require("../config/db");
 exports.getAll = async (req, res) => {
   try {
     const { type, time_filter } = req.query;
-    let sql = "SELECT * FROM finance_records WHERE admin_id = ?";
+    let sql = "SELECT * FROM finance_records WHERE admin_id = ? AND deleted_at IS NULL";
     const params = [req.admin.id];
 
     if (type && type !== "all") { sql += " AND type = ?"; params.push(type); }
@@ -49,7 +49,7 @@ exports.create = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM finance_records WHERE id = ? AND admin_id = ?",
+      "UPDATE finance_records SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND admin_id = ? AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Record not found" });
@@ -63,7 +63,7 @@ exports.remove = async (req, res) => {
 exports.summary = async (req, res) => {
   try {
     const { time_filter = "thisMonth" } = req.query;
-    let condition = "admin_id = ?";
+    let condition = "admin_id = ? AND deleted_at IS NULL";
     const params = [req.admin.id];
 
     if (time_filter === "thisMonth")

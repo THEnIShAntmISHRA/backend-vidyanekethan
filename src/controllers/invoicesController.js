@@ -13,11 +13,19 @@ exports.getAll = async (req, res) => {
     let sql = `
       SELECT 
         invoices.*,
-        students.phone AS student_phone
+        students.phone AS student_phone,
+        students.fee AS student_fee,
+        students.paid_fee AS student_paid_fee,
+        students.school_fee AS student_school_fee,
+        students.academy_fee AS student_academy_fee,
+        students.hostel_fee AS student_hostel_fee,
+        students.scholarship_type AS student_scholarship_type,
+        students.scholarship_value AS student_scholarship_value,
+        students.scholarship_amount AS student_scholarship_amount
       FROM invoices
       LEFT JOIN students 
         ON invoices.student_id = students.id
-      WHERE invoices.admin_id = ?
+      WHERE invoices.admin_id = ? AND invoices.deleted_at IS NULL
     `;
     const params = [req.admin.id];
     if (status && status !== "all") { sql += " AND status = ?"; params.push(status); }
@@ -32,7 +40,21 @@ exports.getAll = async (req, res) => {
 exports.getOne = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM invoices WHERE id = ? AND (admin_id = ?)",
+      `SELECT 
+         invoices.*,
+         students.phone AS student_phone,
+         students.fee AS student_fee,
+         students.paid_fee AS student_paid_fee,
+         students.school_fee AS student_school_fee,
+         students.academy_fee AS student_academy_fee,
+         students.hostel_fee AS student_hostel_fee,
+         students.scholarship_type AS student_scholarship_type,
+         students.scholarship_value AS student_scholarship_value,
+         students.scholarship_amount AS student_scholarship_amount
+       FROM invoices
+       LEFT JOIN students 
+         ON invoices.student_id = students.id
+       WHERE invoices.id = ? AND invoices.admin_id = ? AND invoices.deleted_at IS NULL`,
       [req.params.id, req.admin.id]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: "Invoice not found" });
@@ -89,7 +111,7 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM invoices WHERE id = ?",
+      "UPDATE invoices SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL",
       [req.params.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Invoice not found" });
@@ -107,7 +129,7 @@ exports.summary = async (req, res) => {
          SUM(amount)      AS total_invoiced,
          SUM(paid_amount) AS total_paid,
          SUM(amount - paid_amount) AS total_pending
-       FROM invoices WHERE admin_id = ? OR admin_id = 8`,
+       FROM invoices WHERE (admin_id = ? OR admin_id = 8) AND deleted_at IS NULL`,
       [req.admin.id]
     );
     res.json({ success: true, data: rows[0] });

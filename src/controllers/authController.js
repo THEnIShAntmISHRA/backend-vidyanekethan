@@ -9,7 +9,10 @@ exports.signup = async (req, res) => {
     if (!name || !email || !password || !role)
       return res.status(400).json({ success: false, message: "All fields are required" });
     const tableName = role === "admin" ? "admins" : "teachers";
-    const [rows] = await db.query(`SELECT id FROM ${tableName} WHERE email = ?`, [email]);
+    const [rows] = await db.query(
+      `SELECT id FROM ${tableName} WHERE email = ?` + (tableName === "teachers" ? " AND deleted_at IS NULL" : ""),
+      [email]
+    );
     if (rows.length)
       return res.status(409).json({ success: false, message: "Email already registered" });
 
@@ -54,7 +57,7 @@ exports.login = async (req, res) => {
       role = "admin";
     } else {
       // 2. If not found in admins, check Teachers Table
-      const [teacherRows] = await db.query("SELECT * FROM teachers WHERE email = ?", [email]);
+      const [teacherRows] = await db.query("SELECT * FROM teachers WHERE email = ? AND deleted_at IS NULL", [email]);
       if (teacherRows.length > 0) {
         user = teacherRows[0];
         role = "teacher";
