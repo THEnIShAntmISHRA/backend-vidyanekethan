@@ -43,6 +43,8 @@
     phone        VARCHAR(20)  DEFAULT '',
     father_name  VARCHAR(100) DEFAULT '',
     father_phone VARCHAR(20)  DEFAULT '',
+    mother_name  VARCHAR(100) DEFAULT '',
+    school_name  VARCHAR(200) DEFAULT '',
     course        VARCHAR(100) DEFAULT '',
     standard     VARCHAR(50)  DEFAULT '',
     branch       VARCHAR(100) DEFAULT '',
@@ -55,6 +57,7 @@
     scholarship_type     ENUM('Flat','Percent','None') DEFAULT 'None',
     scholarship_value    DECIMAL(10,2) DEFAULT 0.00,
     scholarship_amount   DECIMAL(10,2) DEFAULT 0.00,
+    scholarship_applied_to VARCHAR(255) DEFAULT '',
     dob         DATE         DEFAULT NULL,
     address     TEXT         ,
     aadhar      VARCHAR(20)  ,
@@ -331,6 +334,36 @@
     // Run all CREATE TABLE statements
     await conn.query(DDL);
     console.log("✅ All tables created (or already existed)");
+
+    // DYNAMIC ALTER FOR NEW COLUMNS & SOF BRANCH UPDATE
+    try {
+      const [columns] = await conn.query("SHOW COLUMNS FROM students");
+      const columnNames = columns.map(c => c.Field);
+      
+      if (!columnNames.includes("mother_name")) {
+        await conn.query("ALTER TABLE students ADD COLUMN mother_name VARCHAR(100) DEFAULT '' AFTER father_phone");
+        console.log("➕ Added column 'mother_name' to students table");
+      }
+      if (!columnNames.includes("school_name")) {
+        await conn.query("ALTER TABLE students ADD COLUMN school_name VARCHAR(200) DEFAULT '' AFTER mother_name");
+        console.log("➕ Added column 'school_name' to students table");
+      }
+      if (!columnNames.includes("scholarship_applied_to")) {
+        await conn.query("ALTER TABLE students ADD COLUMN scholarship_applied_to VARCHAR(255) DEFAULT '' AFTER scholarship_amount");
+        console.log("➕ Added column 'scholarship_applied_to' to students table");
+      }
+
+      // Also migrate branches and existing data to 'SOF Branch'
+      await conn.query("UPDATE branches SET branch_name = 'SOF Branch' WHERE branch_name = 'SOF (School of Foundation)'");
+      await conn.query("UPDATE students SET branch = 'SOF Branch' WHERE branch = 'SOF (School of Foundation)'");
+      await conn.query("UPDATE inquiries SET location = 'SOF Branch' WHERE location = 'SOF (School of Foundation)'");
+      await conn.query("UPDATE appointments SET location = 'SOF Branch' WHERE location = 'SOF (School of Foundation)'");
+      await conn.query("UPDATE teacher_updates SET branch = 'SOF Branch' WHERE branch = 'SOF (School of Foundation)'");
+      console.log("🔄 Migrated 'SOF (School of Foundation)' to 'SOF Branch' in DB tables");
+
+    } catch (alterErr) {
+      console.error("⚠️ Alter column check or branch rename failed:", alterErr.message);
+    }
 
     await conn.end();
     console.log("\n🎉 Migration complete!\n");

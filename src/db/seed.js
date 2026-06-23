@@ -32,7 +32,7 @@ async function seed() {
 
   /* ── Branches ────────────────────────────────────────── */
   await db.query("INSERT IGNORE INTO branches (branch_name) VALUES ('Main Branch')");
-  await db.query("INSERT IGNORE INTO branches (branch_name) VALUES ('SOF (School of Foundation)')");
+  await db.query("INSERT IGNORE INTO branches (branch_name) VALUES ('SOF Branch')");
   console.log("🏢 Seeded default branches if missing");
 
   /* ── 1. Admin ────────────────────────────────────────── */
@@ -57,7 +57,7 @@ async function seed() {
   /* ── 2. Teachers ─────────────────────────────────────── */
   const teachers = [
     { name: "Dr. Anil Mehta",   email: "anil@meritome.com",   phone: "9876543220", location: "Main Branch", subjects: ["Mathematics","Physics"] },
-    { name: "Mrs. Sunita Rao",  email: "sunita@meritome.com",  phone: "9876543221", location: "SOF (School of Foundation)",     subjects: ["Chemistry","Biology"] },
+    { name: "Mrs. Sunita Rao",  email: "sunita@meritome.com",  phone: "9876543221", location: "SOF Branch",     subjects: ["Chemistry","Biology"] },
     { name: "Mr. Rajesh Kumar", email: "rajesh@meritome.com",  phone: "9876543222", location: "Main Branch",  subjects: ["English","History"] },
   ];
   const teacherIds = [];
@@ -74,7 +74,7 @@ async function seed() {
   /* ── 3. Students ─────────────────────────────────────── */
   const students = [
     { name:"Rahul Sharma",  email:"rahul@example.com",  phone:"9876543210", father_name:"Suresh Sharma",  father_phone:"9876543211", board:"CBSE",  standard:"10th Standard", course:"Science",  location:"Main Branch", fee:5000, paid_fee:5000 },
-    { name:"Priya Patel",   email:"priya@example.com",  phone:"9876543212", father_name:"Rajesh Patel",   father_phone:"9876543213", board:"ICSE",  standard:"9th Standard",  course:"Commerce", location:"SOF (School of Foundation)",     fee:5000, paid_fee:2500 },
+    { name:"Priya Patel",   email:"priya@example.com",  phone:"9876543212", father_name:"Rajesh Patel",   father_phone:"9876543213", board:"ICSE",  standard:"9th Standard",  course:"Commerce", location: "SOF Branch",     fee:5000, paid_fee:2500 },
     { name:"Amit Kumar",    email:"amit@example.com",   phone:"9876543214", father_name:"Vikram Kumar",   father_phone:"9876543215", board:"State", standard:"11th Standard", course:"Science",  location:"Main Branch",  fee:6000, paid_fee:6000 },
     { name:"Sneha Joshi",   email:"sneha@example.com",  phone:"9876543216", father_name:"Prakash Joshi",  father_phone:"9876543217", board:"CBSE",  standard:"12th Standard", course:"Arts",     location:"Main Branch", fee:7000, paid_fee:0    },
   ];
@@ -98,7 +98,7 @@ async function seed() {
      (?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       adminId,"Arjun Singh",  "9876540001","Vikram Singh","9876540002","Science Tuition","Main Branch","CBSE", "10th Standard","New",      "", d(0),
-      adminId,"Neha Desai",   "9876540003","Mohan Desai", "9876540004","Math Classes",   "SOF (School of Foundation)",    "ICSE", "9th Standard", "Contacted","", d(-1),
+      adminId,"Neha Desai",   "9876540003","Mohan Desai", "9876540004","Math Classes",   "SOF Branch",    "ICSE", "9th Standard", "Contacted","", d(-1),
     ]
   );
   console.log("📋 Inquiries created");
@@ -111,7 +111,7 @@ async function seed() {
      (?,?,?,?,?,?,?,?,?,?)`,
     [
       adminId,"Rahul Sharma","10th Standard","CBSE","Science Tuition", d(0), "10:00","Main Branch","+919876543210","Pending",
-      adminId,"Priya Patel", "9th Standard", "ICSE","Math Classes",    d(1), "14:00","SOF (School of Foundation)",    "+919876543212","Confirmed",
+      adminId,"Priya Patel", "9th Standard", "ICSE","Math Classes",    d(1), "14:00","SOF Branch",    "+919876543212","Confirmed",
     ]
   );
   console.log("📅 Appointments created");

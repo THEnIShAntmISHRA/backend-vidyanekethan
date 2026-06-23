@@ -35,6 +35,7 @@ router.post("/", async (req, res) => {
       email,
       father_name,
       father_phone,
+      mother_name,
       board,
       standard,
       course,
@@ -110,8 +111,8 @@ router.post("/", async (req, res) => {
     // ✅ Insert query
     const [result] = await db.query(
       `INSERT INTO students
-      (admin_id, name, phone, email, father_name, father_phone, standard, course, branch, dob, address, aadhar, caste_religion, photo, admission_type, admission_date, fee, paid_fee, school_fee, academy_fee, hostel_fee)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`,
+      (admin_id, name, phone, email, father_name, father_phone, mother_name, standard, course, branch, dob, address, aadhar, caste_religion, photo, admission_type, admission_date, fee, paid_fee, school_fee, academy_fee, hostel_fee)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`,
 
       [
         adminId,
@@ -120,6 +121,7 @@ router.post("/", async (req, res) => {
         email || "",
         father_name || "",
         father_phone || "",
+        mother_name || "",
         standard || "",
         course || "",
         branch || "",

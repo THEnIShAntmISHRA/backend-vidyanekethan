@@ -1,5 +1,23 @@
 const db = require("../config/db");
 
+// Helper to safely format Date to YYYY-MM-DD or null for MySQL
+const formatDate = (dateVal) => {
+  if (!dateVal) return null;
+  if (typeof dateVal === "string") {
+    if (dateVal.includes("T")) {
+      return dateVal.split("T")[0];
+    }
+    if (dateVal.trim() === "") {
+      return null;
+    }
+    return dateVal;
+  }
+  if (dateVal instanceof Date) {
+    return dateVal.toISOString().split("T")[0];
+  }
+  return dateVal;
+};
+
 function normalizeNotes(value) {
   if (value === undefined || value === null) return null;
   const txt = String(value).trim();
@@ -115,7 +133,7 @@ exports.create = async (req, res) => {
         chapter,
         topic,
         branch,
-        class_date,
+        formatDate(class_date),
         class_time,
         normalizeNotes(notes !== undefined ? notes : remarks),
       ]
@@ -159,7 +177,7 @@ exports.update = async (req, res) => {
         chapter,
         topic,
         branch,
-        class_date,
+        formatDate(class_date),
         class_time,
         normalizeNotes(notes !== undefined ? notes : remarks),
         req.params.id,

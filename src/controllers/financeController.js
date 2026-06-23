@@ -1,5 +1,23 @@
 const db = require("../config/db");
 
+// Helper to safely format Date to YYYY-MM-DD or null for MySQL
+const formatDate = (dateVal) => {
+  if (!dateVal) return null;
+  if (typeof dateVal === "string") {
+    if (dateVal.includes("T")) {
+      return dateVal.split("T")[0];
+    }
+    if (dateVal.trim() === "") {
+      return null;
+    }
+    return dateVal;
+  }
+  if (dateVal instanceof Date) {
+    return dateVal.toISOString().split("T")[0];
+  }
+  return dateVal;
+};
+
 /* GET /api/finance?type=&time_filter= */
 exports.getAll = async (req, res) => {
   try {
@@ -37,7 +55,7 @@ exports.create = async (req, res) => {
 
     const [result] = await db.query(
       "INSERT INTO finance_records (admin_id,type,name,amount,record_date,category) VALUES (?,?,?,?,?,?)",
-      [req.admin.id, type, name, parseFloat(amount), date, category||""]
+      [req.admin.id, type, name, parseFloat(amount), formatDate(date), category||""]
     );
     res.status(201).json({ success: true, message: "Record created", id: result.insertId });
   } catch (err) {
