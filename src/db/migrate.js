@@ -340,17 +340,23 @@
       const [columns] = await conn.query("SHOW COLUMNS FROM students");
       const columnNames = columns.map(c => c.Field);
       
-      if (!columnNames.includes("mother_name")) {
-        await conn.query("ALTER TABLE students ADD COLUMN mother_name VARCHAR(100) DEFAULT '' AFTER father_phone");
-        console.log("➕ Added column 'mother_name' to students table");
-      }
-      if (!columnNames.includes("school_name")) {
-        await conn.query("ALTER TABLE students ADD COLUMN school_name VARCHAR(200) DEFAULT '' AFTER mother_name");
-        console.log("➕ Added column 'school_name' to students table");
-      }
-      if (!columnNames.includes("scholarship_applied_to")) {
-        await conn.query("ALTER TABLE students ADD COLUMN scholarship_applied_to VARCHAR(255) DEFAULT '' AFTER scholarship_amount");
-        console.log("➕ Added column 'scholarship_applied_to' to students table");
+      const expectedColumns = [
+        { name: "mother_name", definition: "VARCHAR(100) DEFAULT ''" },
+        { name: "school_name", definition: "VARCHAR(200) DEFAULT ''" },
+        { name: "school_fee", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "hostel_fee", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "academy_fee", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "scholarship_type", definition: "ENUM('Flat','Percent','None') DEFAULT 'None'" },
+        { name: "scholarship_value", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "scholarship_amount", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "scholarship_applied_to", definition: "VARCHAR(255) DEFAULT ''" }
+      ];
+
+      for (const col of expectedColumns) {
+        if (!columnNames.includes(col.name)) {
+          await conn.query(`ALTER TABLE students ADD COLUMN \`${col.name}\` ${col.definition}`);
+          console.log(`➕ Added column '${col.name}' to students table`);
+        }
       }
 
       // Also migrate branches and existing data to 'SOF Branch'
