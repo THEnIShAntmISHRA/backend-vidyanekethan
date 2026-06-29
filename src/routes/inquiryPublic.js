@@ -26,6 +26,7 @@ exports.create = async (req, res) => {
       father_phone,
       course,
       standard,
+      batch,
       dob,
       email,
       address,
@@ -53,11 +54,11 @@ exports.create = async (req, res) => {
 
     const [result] = await db.query(
       `INSERT INTO inquiry_extra (
-        name, phone, father_name, father_phone, course, standard,
+        name, phone, father_name, father_phone, course, standard, batch,
         dob, email, address, college_name, college_timing, last_exam_marks,
         father_occupation, mother_occupation, future_plans, reference,
         sibling_name, sex, taking_coaching, hostel_required, inquiry_date
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         phone,
@@ -65,6 +66,7 @@ exports.create = async (req, res) => {
         father_phone,
         course,
         standard,
+        batch || "",
         dob,
         email,
         address,
@@ -182,6 +184,7 @@ router.post("/", async (req, res) => {
       location,
       board,
       standard,
+      batch,
       status,
       video,
       dob,
@@ -223,11 +226,11 @@ router.post("/", async (req, res) => {
     // ✅ Insert Query
     const query = `
       INSERT INTO inquiry_extra
-      (admin_id, name, phone, father_name, father_phone, course, location, board, standard, status, video,
+      (admin_id, name, phone, father_name, father_phone, course, location, board, standard, batch, status, video,
        dob, email, address, college_name, college_timing, last_exam_marks,
        father_occupation, mother_occupation, future_plans,
        reference, sibling_name, sex, taking_coaching, hostel_required, inquiry_date)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURDATE())
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURDATE())
     `;
 
     const values = [
@@ -240,6 +243,7 @@ router.post("/", async (req, res) => {
       location || "",
       board || "",
       standard || "",
+      batch || "",
       status || "New",
       video || "",
       dob || "",

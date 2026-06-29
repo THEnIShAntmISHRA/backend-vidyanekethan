@@ -20,11 +20,13 @@ const formatDate = (dateVal) => {
 
 exports.getAll = async (req, res) => {
   try {
-    const { date_filter, location } = req.query;
+    const { date_filter, location, standard, batch } = req.query;
     let sql = "SELECT * FROM appointments WHERE admin_id = ? AND deleted_at IS NULL";
     const params = [req.admin.id];
 
     if (location && location !== "all") { sql += " AND location = ?"; params.push(location); }
+    if (standard && standard !== "all") { sql += " AND standard = ?"; params.push(standard); }
+    if (batch && batch !== "all")       { sql += " AND batch = ?"; params.push(batch); }
 
     if (date_filter && date_filter !== "all") {
       if (date_filter === "today")
@@ -60,15 +62,15 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, standard, board, course, date, time, location, whatsapp, status } = req.body;
+    const { name, standard, batch, board, course, date, time, location, whatsapp, status } = req.body;
     if (!name || !date || !time)
       return res.status(400).json({ success: false, message: "Name, date and time are required" });
 
     const [result] = await db.query(
       `INSERT INTO appointments
-         (admin_id,name,standard,board,course,appointment_date,appointment_time,location,whatsapp,status)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`,
-      [req.admin.id, name, standard||"", board||"", course||"", formatDate(date), time, location||"", whatsapp||"", status||"Pending"]
+         (admin_id,name,standard,batch,board,course,appointment_date,appointment_time,location,whatsapp,status)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      [req.admin.id, name, standard||"", batch||"", board||"", course||"", formatDate(date), time, location||"", whatsapp||"", status||"Pending"]
     );
     res.status(201).json({ success: true, message: "Appointment created", id: result.insertId });
   } catch (err) {
@@ -78,12 +80,12 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const { name, standard, board, course, date, time, location, whatsapp, status } = req.body;
+    const { name, standard, batch, board, course, date, time, location, whatsapp, status } = req.body;
     const [result] = await db.query(
       `UPDATE appointments
-       SET name=?,standard=?,board=?,course=?,appointment_date=?,appointment_time=?,location=?,whatsapp=?,status=?
+       SET name=?,standard=?,batch=?,board=?,course=?,appointment_date=?,appointment_time=?,location=?,whatsapp=?,status=?
        WHERE id=? AND admin_id=?`,
-      [name, standard||"", board||"", course||"", formatDate(date), time, location||"", whatsapp||"", status||"Pending",
+      [name, standard||"", batch||"", board||"", course||"", formatDate(date), time, location||"", whatsapp||"", status||"Pending",
        req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Appointment not found" });

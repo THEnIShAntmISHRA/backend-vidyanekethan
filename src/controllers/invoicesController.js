@@ -42,7 +42,10 @@ exports.getAll = async (req, res) => {
         students.scholarship_amount AS student_scholarship_amount,
         students.scholarship_applied_to AS student_scholarship_applied_to,
         students.mother_name AS student_mother_name,
-        students.school_name AS student_school_name
+        students.school_name AS student_school_name,
+        students.standard AS student_standard,
+        students.batch AS student_batch,
+        students.branch AS student_branch
       FROM invoices
       LEFT JOIN students 
         ON invoices.student_id = students.id
@@ -74,7 +77,10 @@ exports.getOne = async (req, res) => {
          students.scholarship_amount AS student_scholarship_amount,
          students.scholarship_applied_to AS student_scholarship_applied_to,
          students.mother_name AS student_mother_name,
-         students.school_name AS student_school_name
+         students.school_name AS student_school_name,
+         students.standard AS student_standard,
+         students.batch AS student_batch,
+         students.branch AS student_branch
        FROM invoices
        LEFT JOIN students 
          ON invoices.student_id = students.id

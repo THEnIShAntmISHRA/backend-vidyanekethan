@@ -2,12 +2,13 @@ const db = require("../config/db");
 
 exports.getAll = async (req, res) => {
   try {
-    const { date_filter, location, standard } = req.query;
+    const { date_filter, location, standard, batch } = req.query;
     let sql = "SELECT * FROM inquiries WHERE admin_id = ? AND deleted_at IS NULL";
     const params = [req.admin.id];
 
     if (location && location !== "all") { sql += " AND location = ?"; params.push(location); }
     if (standard && standard !== "all") { sql += " AND standard = ?"; params.push(standard); }
+    if (batch && batch !== "all")       { sql += " AND batch = ?"; params.push(batch); }
 
     if (date_filter && date_filter !== "all") {
       const today = new Date().toISOString().split("T")[0];
@@ -44,15 +45,15 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, phone, father_name, father_phone, course, location, board, standard, status, video } = req.body;
+    const { name, phone, father_name, father_phone, course, location, board, standard, batch, status, video } = req.body;
     if (!name || !phone) return res.status(400).json({ success: false, message: "Name and phone are required" });
 
     const [result] = await db.query(
       `INSERT INTO inquiries
-         (admin_id,name,phone,father_name,father_phone,course,location,board,standard,status,video,inquiry_date)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,CURDATE())`,
+         (admin_id,name,phone,father_name,father_phone,course,location,board,standard,batch,status,video,inquiry_date)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,CURDATE())`,
       [req.admin.id, name, phone, father_name||"", father_phone||"",
-       course||"", location||"", board||"", standard||"", status||"New", video||""]
+       course||"", location||"", board||"", standard||"", batch||"", status||"New", video||""]
     );
     res.status(201).json({ success: true, message: "Inquiry created", id: result.insertId });
   } catch (err) {
@@ -62,13 +63,13 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const { name, phone, father_name, father_phone, course, location, board, standard, status, video } = req.body;
+    const { name, phone, father_name, father_phone, course, location, board, standard, batch, status, video } = req.body;
     const [result] = await db.query(
       `UPDATE inquiries
-       SET name=?,phone=?,father_name=?,father_phone=?,course=?,location=?,board=?,standard=?,status=?,video=?
+       SET name=?,phone=?,father_name=?,father_phone=?,course=?,location=?,board=?,standard=?,batch=?,status=?,video=?
        WHERE id=? AND admin_id=?`,
       [name, phone, father_name||"", father_phone||"", course||"", location||"",
-       board||"", standard||"", status||"New", video||"",
+       board||"", standard||"", batch||"", status||"New", video||"",
        req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Inquiry not found" });

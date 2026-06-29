@@ -73,18 +73,18 @@ async function seed() {
 
   /* ── 3. Students ─────────────────────────────────────── */
   const students = [
-    { name:"Rahul Sharma",  email:"rahul@example.com",  phone:"9876543210", father_name:"Suresh Sharma",  father_phone:"9876543211", board:"CBSE",  standard:"10th Standard", course:"Science",  location:"Main Branch", fee:5000, paid_fee:5000 },
-    { name:"Priya Patel",   email:"priya@example.com",  phone:"9876543212", father_name:"Rajesh Patel",   father_phone:"9876543213", board:"ICSE",  standard:"9th Standard",  course:"Commerce", location: "SOF Branch",     fee:5000, paid_fee:2500 },
-    { name:"Amit Kumar",    email:"amit@example.com",   phone:"9876543214", father_name:"Vikram Kumar",   father_phone:"9876543215", board:"State", standard:"11th Standard", course:"Science",  location:"Main Branch",  fee:6000, paid_fee:6000 },
-    { name:"Sneha Joshi",   email:"sneha@example.com",  phone:"9876543216", father_name:"Prakash Joshi",  father_phone:"9876543217", board:"CBSE",  standard:"12th Standard", course:"Arts",     location:"Main Branch", fee:7000, paid_fee:0    },
+    { name:"Rahul Sharma",  email:"rahul@example.com",  phone:"9876543210", father_name:"Suresh Sharma",  father_phone:"9876543211", board:"CBSE",  standard:"10th Standard", batch:"10th Standard", course:"Science",  location:"Main Branch", fee:5000, paid_fee:5000 },
+    { name:"Priya Patel",   email:"priya@example.com",  phone:"9876543212", father_name:"Rajesh Patel",   father_phone:"9876543213", board:"ICSE",  standard:"9th Standard",  batch:"9th Standard", course:"Commerce", location: "SOF Branch",     fee:5000, paid_fee:2500 },
+    { name:"Amit Kumar",    email:"amit@example.com",   phone:"9876543214", father_name:"Vikram Kumar",   father_phone:"9876543215", board:"State", standard:"11th Standard", batch:"JEE", course:"Science",  location:"Main Branch",  fee:6000, paid_fee:6000 },
+    { name:"Sneha Joshi",   email:"sneha@example.com",  phone:"9876543216", father_name:"Prakash Joshi",  father_phone:"9876543217", board:"CBSE",  standard:"12th Standard", batch:"NEET", course:"Arts",     location:"Main Branch", fee:7000, paid_fee:0    },
   ];
   const studentIds = [];
   for (const s of students) {
     const [r] = await db.query(
       `INSERT INTO students
-         (admin_id,name,email,phone,father_name,father_phone,standard,course,branch,fee,paid_fee)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-      [adminId,s.name,s.email,s.phone,s.father_name,s.father_phone,s.standard,s.course,s.location,s.fee,s.paid_fee]
+         (admin_id,name,email,phone,father_name,father_phone,standard,batch,course,branch,fee,paid_fee)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [adminId,s.name,s.email,s.phone,s.father_name,s.father_phone,s.standard,s.batch,s.course,s.location,s.fee,s.paid_fee]
     );
     studentIds.push(r.insertId);
   }
@@ -92,26 +92,26 @@ async function seed() {
 
   /* ── 4. Inquiries ────────────────────────────────────── */
   await db.query(
-    `INSERT INTO inquiries (admin_id,name,phone,father_name,father_phone,course,location,board,standard,status,video,inquiry_date)
+    `INSERT INTO inquiries (admin_id,name,phone,father_name,father_phone,course,location,board,standard,batch,status,video,inquiry_date)
      VALUES
-     (?,?,?,?,?,?,?,?,?,?,?,?),
-     (?,?,?,?,?,?,?,?,?,?,?,?)`,
+     (?,?,?,?,?,?,?,?,?,?,?,?,?),
+     (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
-      adminId,"Arjun Singh",  "9876540001","Vikram Singh","9876540002","Science Tuition","Main Branch","CBSE", "10th Standard","New",      "", d(0),
-      adminId,"Neha Desai",   "9876540003","Mohan Desai", "9876540004","Math Classes",   "SOF Branch",    "ICSE", "9th Standard", "Contacted","", d(-1),
+      adminId,"Arjun Singh",  "9876540001","Vikram Singh","9876540002","Science Tuition","Main Branch","CBSE", "10th Standard","10th Standard","New",      "", d(0),
+      adminId,"Neha Desai",   "9876540003","Mohan Desai", "9876540004","Math Classes",   "SOF Branch",    "ICSE", "9th Standard", "9th Standard", "Contacted","", d(-1),
     ]
   );
   console.log("📋 Inquiries created");
 
   /* ── 5. Appointments ─────────────────────────────────── */
   await db.query(
-    `INSERT INTO appointments (admin_id,name,standard,board,course,appointment_date,appointment_time,location,whatsapp,status)
+    `INSERT INTO appointments (admin_id,name,standard,board,course,batch,appointment_date,appointment_time,location,whatsapp,status)
      VALUES
-     (?,?,?,?,?,?,?,?,?,?),
-     (?,?,?,?,?,?,?,?,?,?)`,
+     (?,?,?,?,?,?,?,?,?,?,?),
+     (?,?,?,?,?,?,?,?,?,?,?)`,
     [
-      adminId,"Rahul Sharma","10th Standard","CBSE","Science Tuition", d(0), "10:00","Main Branch","+919876543210","Pending",
-      adminId,"Priya Patel", "9th Standard", "ICSE","Math Classes",    d(1), "14:00","SOF Branch",    "+919876543212","Confirmed",
+      adminId,"Rahul Sharma","10th Standard","CBSE","Science Tuition","10th Standard", d(0), "10:00","Main Branch","+919876543210","Pending",
+      adminId,"Priya Patel", "9th Standard", "ICSE","Math Classes",   "9th Standard",    d(1), "14:00","SOF Branch",    "+919876543212","Confirmed",
     ]
   );
   console.log("📅 Appointments created");

@@ -47,6 +47,7 @@
     school_name  VARCHAR(200) DEFAULT '',
     course        VARCHAR(100) DEFAULT '',
     standard     VARCHAR(50)  DEFAULT '',
+    batch        VARCHAR(255) DEFAULT '',
     branch       VARCHAR(100) DEFAULT '',
     hostel       ENUM('Yes','No', '')      DEFAULT '',
     school_fee          DECIMAL(10,2) DEFAULT 0.00,
@@ -103,6 +104,7 @@
     location     VARCHAR(100) DEFAULT '',
     board        VARCHAR(20)  DEFAULT '',
     standard     VARCHAR(50)  DEFAULT '',
+    batch        VARCHAR(255) DEFAULT '',
     status       ENUM('New','Contacted','Follow Up','Admission Done','Not Interested') NOT NULL DEFAULT 'New',
     video        VARCHAR(500) DEFAULT '',
     inquiry_date DATE         NOT NULL DEFAULT (CURRENT_DATE),
@@ -122,6 +124,7 @@
     standard         VARCHAR(50)  DEFAULT '',
     board            VARCHAR(20)  DEFAULT '',
     course           VARCHAR(100) DEFAULT '',
+    batch            VARCHAR(255) DEFAULT '',
     appointment_date DATE         NOT NULL,
     appointment_time TIME         NOT NULL,
     location         VARCHAR(100) DEFAULT '',
@@ -271,6 +274,7 @@
     location     VARCHAR(100) DEFAULT '',
     board        VARCHAR(20)  DEFAULT '',
     standard     VARCHAR(50)  DEFAULT '',
+    batch        VARCHAR(255) DEFAULT '',
     status       VARCHAR(50)  DEFAULT 'New',
     video        VARCHAR(500) DEFAULT '',
     dob          VARCHAR(50)  DEFAULT '',
@@ -359,6 +363,17 @@
         }
       }
 
+      // Add batch column to students, inquiries, inquiry_extra, appointments tables if missing
+      const tablesToBatch = ["students", "inquiries", "inquiry_extra", "appointments"];
+      for (const t of tablesToBatch) {
+        const [cols] = await conn.query(`SHOW COLUMNS FROM \`${t}\``);
+        const colNames = cols.map(c => c.Field);
+        if (!colNames.includes("batch")) {
+          await conn.query(`ALTER TABLE \`${t}\` ADD COLUMN \`batch\` VARCHAR(255) DEFAULT ''`);
+          console.log(`➕ Added column 'batch' to ${t} table`);
+        }
+      }
+
       // Also migrate branches and existing data to 'SOF Branch'
       await conn.query("UPDATE branches SET branch_name = 'SOF Branch' WHERE branch_name = 'SOF (School of Foundation)'");
       await conn.query("UPDATE students SET branch = 'SOF Branch' WHERE branch = 'SOF (School of Foundation)'");
@@ -366,6 +381,54 @@
       await conn.query("UPDATE appointments SET location = 'SOF Branch' WHERE location = 'SOF (School of Foundation)'");
       await conn.query("UPDATE teacher_updates SET branch = 'SOF Branch' WHERE branch = 'SOF (School of Foundation)'");
       console.log("🔄 Migrated 'SOF (School of Foundation)' to 'SOF Branch' in DB tables");
+
+      // Safe data migration for standard and batch splitting
+      const mapping = {
+        "4th Scholarship": { std: "4th Standard", batch: "4th Scholarship" },
+        "5th Scholarship(नवोदय / सैनिक)": { std: "5th Standard", batch: "5th Scholarship(नवोदय / सैनिक)" },
+        "6th Foundation": { std: "6th Standard", batch: "6th Foundation" },
+        "7th Scholarship": { std: "7th Standard", batch: "7th Scholarship" },
+        "7th Foundation": { std: "7th Standard", batch: "7th Foundation" },
+        "6th–7th Foundation": { std: "7th Standard", batch: "6th–7th Foundation" },
+        "8th Foundation": { std: "8th Standard", batch: "8th Foundation" },
+        "8th Regular": { std: "8th Standard", batch: "8th Regular" },
+        "9th Photon": { std: "9th Standard", batch: "9th Photon" },
+        "9th Foundation": { std: "9th Standard", batch: "9th Foundation" },
+        "Basic Foundation 1 (4th to 6th)": { std: "5th Standard", batch: "Basic Foundation 1 (4th to 6th)" },
+        "Basic Foundation 2 (7th to 9th)": { std: "8th Standard", batch: "Basic Foundation 2 (7th to 9th)" },
+      };
+
+      for (const t of tablesToBatch) {
+        const [rows] = await conn.query(`SELECT id, standard, course FROM \`${t}\``);
+        for (const row of rows) {
+          let updatedStd = row.standard;
+          let updatedBatch = "";
+          
+          if (!row.standard) continue;
+          
+          const stdStr = row.standard.trim();
+          if (mapping[stdStr]) {
+            updatedStd = mapping[stdStr].std;
+            updatedBatch = mapping[stdStr].batch;
+          } else if (stdStr === "11th Standard" || stdStr === "12th Standard") {
+            const cStr = (row.course || "").trim();
+            const validSeniors = ["JEE", "NEET", "Foundation", "CET"];
+            if (validSeniors.includes(cStr)) {
+              updatedBatch = cStr;
+            } else {
+              updatedBatch = "JEE"; // Safe default
+            }
+          } else {
+            updatedBatch = stdStr; // E.g. '10th Standard' batch for '10th Standard'
+          }
+
+          await conn.query(
+            `UPDATE \`${t}\` SET standard = ?, batch = ? WHERE id = ?`,
+            [updatedStd, updatedBatch, row.id]
+          );
+        }
+        console.log(`✅ Data migration complete for table '${t}'`);
+      }
 
     } catch (alterErr) {
       console.error("⚠️ Alter column check or branch rename failed:", alterErr.message);

@@ -21,7 +21,7 @@ const formatDate = (dateVal) => {
 /* GET /api/students?standard=&course=&branch=&search= */
 exports.getAll = async (req, res) => {
   try {
-    const { standard, course, branch, search } = req.query;
+    const { standard, course, branch, search, batch } = req.query;
 /*    let sql = "SELECT * FROM students WHERE admin_id = ? OR admin_id = 8";
     const params = [req.admin.id]; */
 
@@ -29,6 +29,7 @@ exports.getAll = async (req, res) => {
     const params = [];
 
     if (standard) { sql += " AND standard = ?"; params.push(standard); }
+    if (batch)    { sql += " AND batch = ?"; params.push(batch); }
     if (course)     { sql += " AND course LIKE ?"; params.push(`%${course}%`); }
     if (branch)  { sql += " AND branch = ?"; params.push(branch); }
     if (search) {
@@ -64,7 +65,7 @@ exports.create = async (req, res) => {
   try {
     const {
       admin_id, name, email, phone, father_name, father_phone, gender, academic_year,
-      standard, course, branch, hostel, fee, paid_fee, dob, address, aadhar,
+      standard, batch, course, branch, hostel, fee, paid_fee, dob, address, aadhar,
       caste_religion, photo, admission_type, admission_date, school_fee, academy_fee, hostel_fee,
       scholarship_type, scholarship_value, scholarship_amount,
       mother_name, school_name, scholarship_applied_to
@@ -74,14 +75,14 @@ exports.create = async (req, res) => {
     const [result] = await db.query(
       `INSERT INTO students
          (admin_id, name, email, phone, father_name, father_phone, mother_name, school_name, gender, academic_year,
-          standard, course, branch, hostel, fee, paid_fee, dob, address, aadhar,
+          standard, batch, course, branch, hostel, fee, paid_fee, dob, address, aadhar,
           caste_religion, photo, admission_type, admission_date, school_fee, academy_fee, hostel_fee,
           scholarship_type, scholarship_value, scholarship_amount, scholarship_applied_to)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         admin_id || req.admin?.id || null, name, email || null, phone || "", father_name || "", father_phone || "",
         mother_name || "", school_name || "",
-        gender || "", academic_year || "", standard || "", course || "", branch || "", hostel || "",
+        gender || "", academic_year || "", standard || "", batch || "", course || "", branch || "", hostel || "",
         fee || 0, paid_fee || 0, formatDate(dob), address || "", aadhar || "",
         caste_religion || "", photo || null, admission_type || "", formatDate(admission_date),
         school_fee || 0, academy_fee || 0, hostel_fee || 0,
@@ -100,14 +101,14 @@ exports.update = async (req, res) => {
   try {
     const {
       admin_id, name, id, email, phone, father_name, father_phone, gender, academic_year,
-      standard, course, branch, hostel, academy_fee, school_fee, hostel_fee, fee, paid_fee,
+      standard, batch, course, branch, hostel, academy_fee, school_fee, hostel_fee, fee, paid_fee,
       dob, address, aadhar, caste_religion, photo, admission_type, admission_date,
       scholarship_type, scholarship_value, scholarship_amount,
       mother_name, school_name, scholarship_applied_to
     } = req.body;
     const [result] = await db.query(
       `UPDATE students
-       SET name=?,email=?,phone=?,father_name=?,father_phone=?,mother_name=?,school_name=?,standard=?,course=?,
+       SET name=?,email=?,phone=?,father_name=?,father_phone=?,mother_name=?,school_name=?,standard=?,batch=?,course=?,
        branch=?,academy_fee=?,school_fee=?,hostel_fee=?,fee=?,paid_fee=?,
        dob=?,address=?,aadhar=?,caste_religion=?,photo=?,admission_type=?,admission_date=?,
        gender=?,academic_year=?,hostel=?,scholarship_type=?,scholarship_value=?,scholarship_amount=?,scholarship_applied_to=?
@@ -115,7 +116,7 @@ exports.update = async (req, res) => {
       [
         name, email || null, phone || "", father_name || "", father_phone || "",
         mother_name || "", school_name || "",
-        standard || "", course || "", branch || "", academy_fee || 0, school_fee || 0, hostel_fee || 0, fee || 0, paid_fee || 0,
+        standard || "", batch || "", course || "", branch || "", academy_fee || 0, school_fee || 0, hostel_fee || 0, fee || 0, paid_fee || 0,
         formatDate(dob), address || "", aadhar || "", caste_religion || "", photo || null, admission_type || "", formatDate(admission_date),
         gender || "", academic_year || "", hostel || "",
         scholarship_type || 'None', scholarship_value || 0, scholarship_amount || 0,
