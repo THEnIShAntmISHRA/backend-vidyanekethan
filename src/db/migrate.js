@@ -342,7 +342,13 @@
     // DYNAMIC ALTER FOR NEW COLUMNS & SOF BRANCH UPDATE
     try {
       const [columns] = await conn.query("SHOW COLUMNS FROM students");
-      const columnNames = columns.map(c => c.Field);
+      let columnNames = columns.map(c => c.Field);
+      
+      if (columnNames.includes("location") && !columnNames.includes("branch")) {
+        await conn.query("ALTER TABLE students CHANGE COLUMN location branch VARCHAR(100) DEFAULT ''");
+        console.log("🔄 Renamed 'location' column to 'branch' in students table");
+        columnNames = columnNames.map(name => name === "location" ? "branch" : name);
+      }
       
       const expectedColumns = [
         { name: "mother_name", definition: "VARCHAR(100) DEFAULT ''" },
