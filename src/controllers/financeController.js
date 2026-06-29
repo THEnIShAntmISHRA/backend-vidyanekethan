@@ -1,10 +1,28 @@
 const db = require("../config/db");
 
+// Helper to safely format Date to YYYY-MM-DD or null for MySQL
+const formatDate = (dateVal) => {
+  if (!dateVal) return null;
+  if (typeof dateVal === "string") {
+    if (dateVal.includes("T")) {
+      return dateVal.split("T")[0];
+    }
+    if (dateVal.trim() === "") {
+      return null;
+    }
+    return dateVal;
+  }
+  if (dateVal instanceof Date) {
+    return dateVal.toISOString().split("T")[0];
+  }
+  return dateVal;
+};
+
 /* GET /api/finance?type=&time_filter= */
 exports.getAll = async (req, res) => {
   try {
     const { type, time_filter } = req.query;
-    let sql = "SELECT * FROM finance_records WHERE admin_id = ?";
+    let sql = "SELECT * FROM finance_records WHERE admin_id = ? AND deleted_at IS NULL";
     const params = [req.admin.id];
 
     if (type && type !== "all") { sql += " AND type = ?"; params.push(type); }
@@ -37,7 +55,7 @@ exports.create = async (req, res) => {
 
     const [result] = await db.query(
       "INSERT INTO finance_records (admin_id,type,name,amount,record_date,category) VALUES (?,?,?,?,?,?)",
-      [req.admin.id, type, name, parseFloat(amount), date, category||""]
+      [req.admin.id, type, name, parseFloat(amount), formatDate(date), category||""]
     );
     res.status(201).json({ success: true, message: "Record created", id: result.insertId });
   } catch (err) {
@@ -49,7 +67,7 @@ exports.create = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM finance_records WHERE id = ? AND admin_id = ?",
+      "UPDATE finance_records SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND admin_id = ? AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Record not found" });
@@ -63,7 +81,7 @@ exports.remove = async (req, res) => {
 exports.summary = async (req, res) => {
   try {
     const { time_filter = "thisMonth" } = req.query;
-    let condition = "admin_id = ?";
+    let condition = "admin_id = ? AND deleted_at IS NULL";
     const params = [req.admin.id];
 
     if (time_filter === "thisMonth")

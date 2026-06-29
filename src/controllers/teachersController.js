@@ -4,7 +4,7 @@ const db = require("../config/db");
 exports.getTeachers = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM teachers"
+      "SELECT * FROM teachers WHERE deleted_at IS NULL"
     );
     // parse subjects JSON string → array
     // const data = rows.map((r) => ({ ...r, subjects: r.subjects ? JSON.parse(r.subjects) : [] }));
@@ -18,7 +18,7 @@ exports.getTeachers = async (req, res) => {
 exports.getAll = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM teachers WHERE admin_id = ? ORDER BY created_at DESC",
+      "SELECT * FROM teachers WHERE admin_id = ? AND deleted_at IS NULL ORDER BY created_at DESC",
       [req.admin.id]
     );
     // parse subjects JSON string → array
@@ -32,7 +32,7 @@ exports.getAll = async (req, res) => {
 exports.getOne = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM teachers WHERE id = ? AND admin_id = ?",
+      "SELECT * FROM teachers WHERE id = ? AND admin_id = ? AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: "Teacher not found" });
@@ -78,7 +78,7 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM teachers WHERE id = ? AND admin_id = ?",
+      "UPDATE teachers SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND admin_id = ? AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Teacher not found" });

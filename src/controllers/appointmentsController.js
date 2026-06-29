@@ -1,9 +1,27 @@
 const db = require("../config/db");
 
+// Helper to safely format Date to YYYY-MM-DD or null for MySQL
+const formatDate = (dateVal) => {
+  if (!dateVal) return null;
+  if (typeof dateVal === "string") {
+    if (dateVal.includes("T")) {
+      return dateVal.split("T")[0];
+    }
+    if (dateVal.trim() === "") {
+      return null;
+    }
+    return dateVal;
+  }
+  if (dateVal instanceof Date) {
+    return dateVal.toISOString().split("T")[0];
+  }
+  return dateVal;
+};
+
 exports.getAll = async (req, res) => {
   try {
     const { date_filter, location } = req.query;
-    let sql = "SELECT * FROM appointments WHERE admin_id = ?";
+    let sql = "SELECT * FROM appointments WHERE admin_id = ? AND deleted_at IS NULL";
     const params = [req.admin.id];
 
     if (location && location !== "all") { sql += " AND location = ?"; params.push(location); }
@@ -30,7 +48,7 @@ exports.getAll = async (req, res) => {
 exports.getOne = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM appointments WHERE id = ? AND admin_id = ?",
+      "SELECT * FROM appointments WHERE id = ? AND admin_id = ? AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: "Appointment not found" });
@@ -50,7 +68,7 @@ exports.create = async (req, res) => {
       `INSERT INTO appointments
          (admin_id,name,standard,board,course,appointment_date,appointment_time,location,whatsapp,status)
        VALUES (?,?,?,?,?,?,?,?,?,?)`,
-      [req.admin.id, name, standard||"", board||"", course||"", date, time, location||"", whatsapp||"", status||"Pending"]
+      [req.admin.id, name, standard||"", board||"", course||"", formatDate(date), time, location||"", whatsapp||"", status||"Pending"]
     );
     res.status(201).json({ success: true, message: "Appointment created", id: result.insertId });
   } catch (err) {
@@ -65,7 +83,7 @@ exports.update = async (req, res) => {
       `UPDATE appointments
        SET name=?,standard=?,board=?,course=?,appointment_date=?,appointment_time=?,location=?,whatsapp=?,status=?
        WHERE id=? AND admin_id=?`,
-      [name, standard||"", board||"", course||"", date, time, location||"", whatsapp||"", status||"Pending",
+      [name, standard||"", board||"", course||"", formatDate(date), time, location||"", whatsapp||"", status||"Pending",
        req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Appointment not found" });
@@ -78,7 +96,7 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM appointments WHERE id = ? AND admin_id = ?",
+      "UPDATE appointments SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND admin_id = ? AND deleted_at IS NULL",
       [req.params.id, req.admin.id]
     );
     if (!result.affectedRows) return res.status(404).json({ success: false, message: "Appointment not found" });

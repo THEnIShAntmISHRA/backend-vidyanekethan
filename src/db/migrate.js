@@ -43,18 +43,29 @@
     phone        VARCHAR(20)  DEFAULT '',
     father_name  VARCHAR(100) DEFAULT '',
     father_phone VARCHAR(20)  DEFAULT '',
-    course        ENUM('JEE','NEET','Foundation','') DEFAULT '',
+    mother_name  VARCHAR(100) DEFAULT '',
+    school_name  VARCHAR(200) DEFAULT '',
+    course        VARCHAR(100) DEFAULT '',
     standard     VARCHAR(50)  DEFAULT '',
-    branch       ENUM('branch 1','branch 2', '') DEFAULT '',
+    branch       VARCHAR(100) DEFAULT '',
     hostel       ENUM('Yes','No', '')      DEFAULT '',
     school_fee          DECIMAL(10,2) DEFAULT 0.00,
     hostel_fee          DECIMAL(10,2) DEFAULT 0.00,
     academy_fee          DECIMAL(10,2) DEFAULT 0.00,
     fee          DECIMAL(10,2) DEFAULT 0.00,
     paid_fee     DECIMAL(10,2) DEFAULT 0.00,
+    scholarship_type     ENUM('Flat','Percent','None') DEFAULT 'None',
+    scholarship_value    DECIMAL(10,2) DEFAULT 0.00,
+    scholarship_amount   DECIMAL(10,2) DEFAULT 0.00,
+    scholarship_applied_to VARCHAR(255) DEFAULT '',
     dob         DATE         DEFAULT NULL,
     address     TEXT         ,
     aadhar      VARCHAR(20)  ,
+    caste_religion VARCHAR(100) DEFAULT '',
+    photo         LONGTEXT     DEFAULT NULL,
+    admission_type VARCHAR(100) DEFAULT '',
+    admission_date DATE         DEFAULT NULL,
+    deleted_at   DATETIME     DEFAULT NULL,
     created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
@@ -72,6 +83,7 @@
     institute  VARCHAR(200) DEFAULT '',
     location   VARCHAR(100) DEFAULT '',
     subjects   JSON         DEFAULT NULL,   -- e.g. ["Math","Physics"]
+    deleted_at DATETIME     DEFAULT NULL,
     created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
@@ -90,10 +102,11 @@
     course       VARCHAR(100) DEFAULT '',
     location     VARCHAR(100) DEFAULT '',
     board        VARCHAR(20)  DEFAULT '',
-    standard     VARCHAR(10)  DEFAULT '',
+    standard     VARCHAR(50)  DEFAULT '',
     status       ENUM('New','Contacted','Follow Up','Admission Done','Not Interested') NOT NULL DEFAULT 'New',
     video        VARCHAR(500) DEFAULT '',
     inquiry_date DATE         NOT NULL DEFAULT (CURRENT_DATE),
+    deleted_at   DATETIME     DEFAULT NULL,
     created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
@@ -106,7 +119,7 @@
     id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     admin_id         INT UNSIGNED NOT NULL,
     name             VARCHAR(100) NOT NULL,
-    standard         VARCHAR(10)  DEFAULT '',
+    standard         VARCHAR(50)  DEFAULT '',
     board            VARCHAR(20)  DEFAULT '',
     course           VARCHAR(100) DEFAULT '',
     appointment_date DATE         NOT NULL,
@@ -114,6 +127,7 @@
     location         VARCHAR(100) DEFAULT '',
     whatsapp         VARCHAR(25)  DEFAULT '',
     status           ENUM('Pending','Confirmed','Done','Cancelled') NOT NULL DEFAULT 'Pending',
+    deleted_at       DATETIME     DEFAULT NULL,
     created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
@@ -134,6 +148,7 @@
     due_date     DATE          DEFAULT NULL,
     status       ENUM('Paid','Partial','Pending','Overdue') NOT NULL DEFAULT 'Pending',
     description  VARCHAR(500)  DEFAULT '',
+    deleted_at   DATETIME      DEFAULT NULL,
     created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id)   REFERENCES admins(id)   ON DELETE CASCADE,
@@ -151,6 +166,7 @@
     amount       DECIMAL(10,2) NOT NULL,
     record_date  DATE          NOT NULL,
     category     VARCHAR(100)  DEFAULT '',
+    deleted_at   DATETIME      DEFAULT NULL,
     created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -242,6 +258,60 @@
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_notes_chapter FOREIGN KEY (chap_id) REFERENCES chapters(chap_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    -- inquiry_extra
+    CREATE TABLE IF NOT EXISTS inquiry_extra (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    admin_id     INT UNSIGNED DEFAULT NULL,
+    name         VARCHAR(100) NOT NULL,
+    phone        VARCHAR(20)  NOT NULL,
+    father_name  VARCHAR(100) DEFAULT '',
+    father_phone VARCHAR(20)  DEFAULT '',
+    course       VARCHAR(100) DEFAULT '',
+    location     VARCHAR(100) DEFAULT '',
+    board        VARCHAR(20)  DEFAULT '',
+    standard     VARCHAR(50)  DEFAULT '',
+    status       VARCHAR(50)  DEFAULT 'New',
+    video        VARCHAR(500) DEFAULT '',
+    dob          VARCHAR(50)  DEFAULT '',
+    email        VARCHAR(150) DEFAULT '',
+    address      TEXT,
+    college_name VARCHAR(200) DEFAULT '',
+    college_timing VARCHAR(100) DEFAULT '',
+    last_exam_marks VARCHAR(50) DEFAULT '',
+    father_occupation VARCHAR(100) DEFAULT '',
+    mother_occupation VARCHAR(100) DEFAULT '',
+    future_plans VARCHAR(200) DEFAULT '',
+    reference    VARCHAR(200) DEFAULT '',
+    sibling_name VARCHAR(100) DEFAULT '',
+    sex          VARCHAR(50)  DEFAULT '',
+    taking_coaching VARCHAR(50) DEFAULT '',
+    hostel_required VARCHAR(50) DEFAULT '',
+    inquiry_date DATE         DEFAULT NULL,
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    -- ─────────────────────────────────────────────────────────
+    -- 9. teacher_updates
+    -- ─────────────────────────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS teacher_updates (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    admin_id     INT UNSIGNED NOT NULL,
+    teacher_name VARCHAR(100) NOT NULL,
+    batch        VARCHAR(255) NOT NULL,
+    subject      VARCHAR(255) NOT NULL,
+    chapter      VARCHAR(255) NOT NULL,
+    topic        VARCHAR(255) NOT NULL,
+    branch       VARCHAR(255) NOT NULL,
+    class_date   DATE NOT NULL,
+    class_time   VARCHAR(50) NOT NULL,
+    remarks      TEXT DEFAULT NULL,
+    deleted_at   DATETIME     DEFAULT NULL,
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `;
 
 
@@ -264,6 +334,42 @@
     // Run all CREATE TABLE statements
     await conn.query(DDL);
     console.log("✅ All tables created (or already existed)");
+
+    // DYNAMIC ALTER FOR NEW COLUMNS & SOF BRANCH UPDATE
+    try {
+      const [columns] = await conn.query("SHOW COLUMNS FROM students");
+      const columnNames = columns.map(c => c.Field);
+      
+      const expectedColumns = [
+        { name: "mother_name", definition: "VARCHAR(100) DEFAULT ''" },
+        { name: "school_name", definition: "VARCHAR(200) DEFAULT ''" },
+        { name: "school_fee", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "hostel_fee", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "academy_fee", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "scholarship_type", definition: "ENUM('Flat','Percent','None') DEFAULT 'None'" },
+        { name: "scholarship_value", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "scholarship_amount", definition: "DECIMAL(10,2) DEFAULT 0.00" },
+        { name: "scholarship_applied_to", definition: "VARCHAR(255) DEFAULT ''" }
+      ];
+
+      for (const col of expectedColumns) {
+        if (!columnNames.includes(col.name)) {
+          await conn.query(`ALTER TABLE students ADD COLUMN \`${col.name}\` ${col.definition}`);
+          console.log(`➕ Added column '${col.name}' to students table`);
+        }
+      }
+
+      // Also migrate branches and existing data to 'SOF Branch'
+      await conn.query("UPDATE branches SET branch_name = 'SOF Branch' WHERE branch_name = 'SOF (School of Foundation)'");
+      await conn.query("UPDATE students SET branch = 'SOF Branch' WHERE branch = 'SOF (School of Foundation)'");
+      await conn.query("UPDATE inquiries SET location = 'SOF Branch' WHERE location = 'SOF (School of Foundation)'");
+      await conn.query("UPDATE appointments SET location = 'SOF Branch' WHERE location = 'SOF (School of Foundation)'");
+      await conn.query("UPDATE teacher_updates SET branch = 'SOF Branch' WHERE branch = 'SOF (School of Foundation)'");
+      console.log("🔄 Migrated 'SOF (School of Foundation)' to 'SOF Branch' in DB tables");
+
+    } catch (alterErr) {
+      console.error("⚠️ Alter column check or branch rename failed:", alterErr.message);
+    }
 
     await conn.end();
     console.log("\n🎉 Migration complete!\n");

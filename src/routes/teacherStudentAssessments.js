@@ -4,6 +4,7 @@ const auth = require("../middleware/auth");
 const c = require("../controllers/teacherStudentAssessmentsController");
 
 router.get("/", auth, c.getLatestAll);
+router.get("/standard/:standardName", auth, c.getByStandard);
 router.get("/:studentId", auth, c.getByStudent);
 router.post("/:studentId", auth, c.createByStudent);
 

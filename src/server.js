@@ -45,6 +45,7 @@ app.use("/api/inquiry-extra", require("./routes/inquiryExtra"));
 app.use("/api/teacher-updates", require("./routes/teacherUpdates"));
 app.use("/api/inquiry-extra", require("./routes/inquiryExtra"));
 app.use("/api/teacher-student-assessments", require("./routes/teacherStudentAssessments"));
+app.use("/api/recycle-bin", require("./routes/recycleBin"));
 app.use("/api/subjects",  require("./routes/subjects"));
 app.use("/api/batches",  require("./routes/batchRoute"));
 app.use("/api/chapters",  require("./routes/chapters"));
