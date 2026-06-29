@@ -1,4 +1,6 @@
 const db = require("../config/db");
+const { snapshotRanksForAdmin } = require("../services/performanceSnapshotService");
+
 
 // ── CREATE / ASSIGN TEACHER ─────────────────────────────
 exports.assignTeacher = async (req, res) => {
@@ -118,5 +120,35 @@ exports.deleteAssignment = async (req, res) => {
     res.json({ success: true, message: "Assignment removed" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+
+
+exports.deleteByExamination = async (req, res) => {
+  try {
+    await ensureTable();
+    const { examinationName } = req.params;
+    if (!examinationName) {
+      return res.status(400).json({ success: false, message: "Examination name is required" });
+    }
+
+    const [result] = await db.query(
+      `
+      DELETE FROM teacher_student_assessments
+      WHERE admin_id = ? AND examination = ?
+      `,
+      [req.admin.id, examinationName.trim()]
+    );
+
+    try {
+      await snapshotRanksForAdmin(req.admin.id);
+    } catch (snapErr) {
+      console.error("Rank snapshot failed:", snapErr.message);
+    }
+
+    res.json({ success: true, message: "Examination deleted successfully", affectedRows: result.affectedRows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

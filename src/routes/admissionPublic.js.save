@@ -1,0 +1,158 @@
+/**
+ * PUBLIC admission endpoint — no JWT required.
+ * Saves directly to the students table.
+ *
+ * Add to server.js BEFORE the protected students route:
+ *   app.use("/api/admissions/public", require("./routes/admissionPublic"));
+ */
+
+const express = require("express");
+const router = express.Router();
+const db = require("../config/db");
+
+// ✅ Helper: Format date to MySQL format (handles both DD-MM-YYYY and YYYY-MM-DD)
+const formatDate = (date) => {
+  if (!date) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+
+  const parts = date.split("-");
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    return `${year}-${month}-${day}`;
+  }
+
+  return null;
+};
+
+router.post("/", async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      email,
+      father_name,
+      father_phone,
+      board,
+      standard,
+      course,
+      branch,
+      dob,
+      address,
+      aadhar,
+      caste_religion,
+      gender,           // ✅ NEW
+      photo,
+      admission_type,
+      admission_date,        // ✅ NEW
+      school_fees,           // ✅ NEW
+      academy_fees,          // ✅ NEW
+      hostel_fees,  
+      rules_accepted
+    } = req.body;
+
+    // ✅ Validation
+    if (!name || !phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and phone are required"
+      });
+    }
+
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format"
+      });
+    }
+
+    // ✅ Get admin
+    const [admins] = await db.query("SELECT id FROM admins LIMIT 1");
+
+    if (!admins.length) {
+      return res.status(500).json({
+        success: false,
+        message: "No admin account configured"
+      });
+    }
+
+    const adminId = admins[0]?.id || 8;
+
+    // ✅ Photo safety check
+const safePhoto = photo || null;
+
+	// ✅ Calculate size in bytes
+	const photoSize = safePhoto ? Buffer.byteLength(safePhoto, "utf8") : 0;
+
+	// ✅ Convert to MB (for message)
+	const photoSizeMB = (photoSize / (1024 * 1024)).toFixed(2);
+
+	// ✅ 2MB limit check
+	if (safePhoto && photoSize > 2 * 1024 * 1024) {
+	return res.status(400).json({
+	success: false,
+	message: `Photo is too large (${photoSizeMB} MB). Max size is 2MB.`
+	});
+	}
+
+
+	// ✅ Parse fee values
+	const parsedSchoolFees = parseFloat(school_fees) || 0;
+	const parsedAcademyFees = parseFloat(academy_fees) || 0;
+	const parsedHostelFees = parseFloat(hostel_fees) || 0;
+
+    // ✅ Format dates
+    const formattedDob = formatDate(dob);
+    const formattedAdmissionDate = formatDate(admission_date);  // ✅ NEW
+
+    // ✅ Insert query
+    const [result] = await db.query(
+      `INSERT INTO students
+      (admin_id, name, phone, email, father_name, father_phone, standard, course, branch, dob, address, aadhar, caste_religion, gender, photo, admission_type, admission_date, fee, paid_fee, school_fees, academy_fees, hostel_fees)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?	, ?, ?, ?, ?, ?)`,
+
+      [
+        adminId,
+        name,
+        phone,
+        email || "",
+        father_name || "",
+        father_phone || "",
+        standard || "",
+        course || "",
+        branch || "",
+        formattedDob,
+        address || "",
+        aadhar || "",
+        caste_religion || "",
+        gender         || "",   // ✅ NEW
+        safePhoto,
+        admission_type || "",
+        formattedAdmissionDate,  
+ 	0,
+    	0,
+	parsedSchoolFees,              // ✅ NEW
+        parsedAcademyFees,             // ✅ NEW
+        parsedHostelFees,   
+      ]
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Admission submitted successfully",
+      id: result.insertId
+	    });
+
+  } catch (err) {
+    console.error("Public admission error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+});
+
+module.exports = router;
